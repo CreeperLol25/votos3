@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Intención de voto - España</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f0f2f5;
+      text-align: center;
+      padding: 30px;
+    }
+    h1 {
+      color: #333;
+    }
+    .barra {
+      height: 25px;
+      margin: 10px auto;
+      background: #ddd;
+      border-radius: 10px;
+      width: 60%;
+      position: relative;
+    }
+    .relleno {
+      height: 100%;
+      border-radius: 10px;
+      text-align: right;
+      padding-right: 10px;
+      color: white;
+      line-height: 25px;
+      font-size: 14px;
+    }
+    .PSOE { background-color: #d50000; }
+    .PP { background-color: #0056a3; }
+    .VOX { background-color: #63be21; }
+    input[type=number] {
+      width: 60px;
+      padding: 5px;
+      margin: 5px;
+    }
+    button {
+      padding: 10px 20px;
+      font-size: 16px;
+      margin-top: 10px;
+      cursor: pointer;
+    }
+    select {
+      padding: 5px;
+      margin: 10px;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>🗳️ Intención de voto - España</h1>
+  <p>Introduce tu estimación diaria en % para cada partido (suma 100%)</p>
+
+  <div>
+    PSOE: <input type="number" id="input-PSOE" min="0" max="100"> %<br>
+    PP: <input type="number" id="input-PP" min="0" max="100"> %<br>
+    VOX: <input type="number" id="input-VOX" min="0" max="100"> %<br>
+    <button onclick="guardarEstimacion()">Guardar estimación del día</button>
+  </div>
+
+  <h3>📅 Ver otro día:</h3>
+  <select id="selector-fecha" onchange="mostrarOtraFecha()">
+    <option value="">-- Selecciona un día --</option>
+  </select>
+
+  <h2>Resultados en tiempo real:</h2>
+  <div class="barra"><div id="barra-PSOE" class="relleno PSOE" style="width:0%">0%</div></div>
+  <div class="barra"><div id="barra-PP" class="relleno PP" style="width:0%">0%</div></div>
+  <div class="barra"><div id="barra-VOX" class="relleno VOX" style="width:0%">0%</div></div>
+
+  <p id="mensaje"></p>
+
+  <script>
+    function getFechaHoy() {
+      return new Date().toISOString().split('T')[0];
+    }
+
+    function cargarTodos() {
+      return JSON.parse(localStorage.getItem("votosDiarios") || "{}");
+    }
+
+    function guardarEstimacion() {
+      const hoy = getFechaHoy();
+      const datos = cargarTodos();
+
+      if (datos[hoy]) {
+        document.getElementById("mensaje").textContent = "❌ Ya introdujiste los porcentajes hoy.";
+        return;
+      }
+
+      const psoe = parseInt(document.getElementById("input-PSOE").value) || 0;
+      const pp = parseInt(document.getElementById("input-PP").value) || 0;
+      const vox = parseInt(document.getElementById("input-VOX").value) || 0;
+      const total = psoe + pp + vox;
+
+      if (total !== 100) {
+        document.getElementById("mensaje").textContent = "❗ Los porcentajes deben sumar 100%.";
+        return;
+      }
+
+      datos[hoy] = { PSOE: psoe, PP: pp, VOX: vox };
+      localStorage.setItem("votosDiarios", JSON.stringify(datos));
+      document.getElementById("mensaje").textContent = "✅ Porcentajes guardados para hoy.";
+      mostrarResultados(psoe, pp, vox);
+      rellenarFechas();
+    }
+
+    function mostrarResultados(psoe, pp, vox) {
+      document.getElementById("barra-PSOE").style.width = psoe + "%";
+      document.getElementById("barra-PP").style.width = pp + "%";
+      document.getElementById("barra-VOX").style.width = vox + "%";
+
+      document.getElementById("barra-PSOE").textContent = psoe + "%";
+      document.getElementById("barra-PP").textContent = pp + "%";
+      document.getElementById("barra-VOX").textContent = vox + "%";
+    }
+
+    function rellenarFechas() {
+      const datos = cargarTodos();
+      const selector = document.getElementById("selector-fecha");
+      const fechas = Object.keys(datos).sort().reverse();
+      selector.innerHTML = '<option value="">-- Selecciona un día --</option>';
+      fechas.forEach(f => {
+        const opt = document.createElement("option");
+        opt.value = f;
+        opt.textContent = f;
+        selector.appendChild(opt);
+      });
+    }
+
+    function mostrarOtraFecha() {
+      const fecha = document.getElementById("selector-fecha").value;
+      const datos = cargarTodos();
+      if (fecha && datos[fecha]) {
+        mostrarResultados(datos[fecha].PSOE, datos[fecha].PP, datos[fecha].VOX);
+        document.getElementById("mensaje").textContent = `📅 Mostrando datos del ${fecha}`;
+      } else {
+        const hoy = getFechaHoy();
+        if (datos[hoy]) {
+          mostrarResultados(datos[hoy].PSOE, datos[hoy].PP, datos[hoy].VOX);
+        } else {
+          mostrarResultados(0, 0, 0);
+        }
+        document.getElementById("mensaje").textContent = "";
+      }
+    }
+
+    window.onload = function() {
+      const datos = cargarTodos();
+      const hoy = getFechaHoy();
+      if (datos[hoy]) {
+        mostrarResultados(datos[hoy].PSOE, datos[hoy].PP, datos[hoy].VOX);
+        document.getElementById("input-PSOE").value = datos[hoy].PSOE;
+        document.getElementById("input-PP").value = datos[hoy].PP;
+        document.getElementById("input-VOX").value = datos[hoy].VOX;
+      }
+      rellenarFechas();
+    };
+  </script>
+
+</body>
+</html>
