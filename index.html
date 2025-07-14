@@ -48,6 +48,18 @@
       padding: 5px;
       margin: 10px;
     }
+    table {
+      margin: 20px auto;
+      border-collapse: collapse;
+      background: white;
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 8px 12px;
+    }
+    th {
+      background: #eee;
+    }
   </style>
 </head>
 <body>
@@ -73,6 +85,18 @@
   <div class="barra"><div id="barra-VOX" class="relleno VOX" style="width:0%">0%</div></div>
 
   <p id="mensaje"></p>
+
+  <h2>Total acumulado:</h2>
+  <table>
+    <thead>
+      <tr><th>Partido</th><th>Total acumulado (%)</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>PSOE</td><td id="total-PSOE">0%</td></tr>
+      <tr><td>PP</td><td id="total-PP">0%</td></tr>
+      <tr><td>VOX</td><td id="total-VOX">0%</td></tr>
+    </tbody>
+  </table>
 
   <script>
     function getFechaHoy() {
@@ -107,6 +131,7 @@
       document.getElementById("mensaje").textContent = "✅ Porcentajes guardados para hoy.";
       mostrarResultados(psoe, pp, vox);
       rellenarFechas();
+      mostrarTotales();
     }
 
     function mostrarResultados(psoe, pp, vox) {
@@ -149,6 +174,28 @@
       }
     }
 
+    function mostrarTotales() {
+      const datos = cargarTodos();
+      let totalPSOE = 0, totalPP = 0, totalVOX = 0, dias = 0;
+
+      for (let fecha in datos) {
+        totalPSOE += datos[fecha].PSOE;
+        totalPP += datos[fecha].PP;
+        totalVOX += datos[fecha].VOX;
+        dias++;
+      }
+
+      if (dias > 0) {
+        document.getElementById("total-PSOE").textContent = (totalPSOE / dias).toFixed(1) + "%";
+        document.getElementById("total-PP").textContent = (totalPP / dias).toFixed(1) + "%";
+        document.getElementById("total-VOX").textContent = (totalVOX / dias).toFixed(1) + "%";
+      } else {
+        document.getElementById("total-PSOE").textContent = "0%";
+        document.getElementById("total-PP").textContent = "0%";
+        document.getElementById("total-VOX").textContent = "0%";
+      }
+    }
+
     window.onload = function() {
       const datos = cargarTodos();
       const hoy = getFechaHoy();
@@ -159,8 +206,10 @@
         document.getElementById("input-VOX").value = datos[hoy].VOX;
       }
       rellenarFechas();
+      mostrarTotales();
     };
   </script>
 
 </body>
 </html>
+
